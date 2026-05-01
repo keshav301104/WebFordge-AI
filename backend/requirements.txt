@@ -16,7 +16,7 @@ lxml==5.1.0
 # AI Orchestration (LangChain & LangGraph)
 langchain>=0.2.0
 langchain-core>=0.2.0
-langchain-openai==0.0.8
+langchain-openai>=0.1.0
 langchain-google-genai>=1.0.6
 langgraph==0.0.24
 
