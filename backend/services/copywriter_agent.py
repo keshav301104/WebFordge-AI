@@ -1,3 +1,4 @@
+from typing import List
 import json
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
@@ -9,10 +10,10 @@ class ElementMapping(BaseModel):
 
 class Variant(BaseModel):
     variant_name: str = Field(description="Must be 'Urgency', 'Trust', or 'Logical'.")
-    element_mappings: list[ElementMapping] = Field(description="List of text/image updates mapped exactly to the original IDs.")
+    element_mappings: List[ElementMapping] = Field(description="List of text/image updates mapped exactly to the original IDs.")
 
 class CopywriterOutput(BaseModel):
-    variants: list[Variant] = Field(description="Exactly 3 variants: Urgency, Trust, and Logical.")
+    variants: List[Variant] = Field(description="Exactly 3 variants: Urgency, Trust, and Logical.")
 
 # Add custom_prompt and creative_image_url to the parameters
 async def generate_variants(scraped_json_str: str, ad_context: dict, creative_image_url: str = "", custom_prompt: str = "") -> dict:
