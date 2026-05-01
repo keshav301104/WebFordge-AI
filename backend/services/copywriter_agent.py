@@ -98,14 +98,20 @@ async def generate_variants(scraped_json_str: str, ad_context: dict, creative_im
     chain = prompt | structured_llm
     
     try:
-        # Get the raw dictionary from Gemini
+        # Get the raw output from Gemini
         raw_result = await chain.ainvoke({
             "ad_context": json.dumps(ad_context, indent=2),
             "scraped_elements": scraped_json_str
         })
         
+        # THE FIX: Wrap it back in a dictionary if Gemini handed us a raw list
+        if isinstance(raw_result, list):
+            safe_result = {"variants": raw_result}
+        else:
+            safe_result = raw_result
+            
         # Convert the dictionary back into your exact Pydantic model!
-        result = CopywriterOutput(**raw_result)
+        result = CopywriterOutput(**safe_result)
         
         return result.dict()
     except Exception as e:
