@@ -104,11 +104,16 @@ async def generate_variants(scraped_json_str: str, ad_context: dict, creative_im
             "scraped_elements": scraped_json_str
         })
         
-        # THE FIX: Wrap it back in a dictionary if Gemini handed us a raw list
+        # Wrap it back in a dictionary if Gemini handed us a raw list
         if isinstance(raw_result, list):
             safe_result = {"variants": raw_result}
         else:
             safe_result = raw_result
+            
+        # --- NEW DEBUGGING PRINTS ---
+        print("\n\n====== RAW LLM OUTPUT ======")
+        print(json.dumps(safe_result, indent=2))
+        print("============================\n\n")
             
         # Convert the dictionary back into your exact Pydantic model!
         result = CopywriterOutput(**safe_result)
