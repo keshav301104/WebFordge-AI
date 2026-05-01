@@ -15,10 +15,54 @@ class Variant(BaseModel):
 class CopywriterOutput(BaseModel):
     variants: List[Variant] = Field(description="Exactly 3 variants: Urgency, Trust, and Logical.")
 
+# The perfectly unrolled schema that bypasses the Gemini array bug
+gemini_safe_schema = {
+    "name": "CopywriterOutput",
+    "description": "Output 3 variants",
+    "type": "object",
+    "properties": {
+        "variants": {
+            "type": "array",
+            "description": "Exactly 3 variants: Urgency, Trust, and Logical.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "variant_name": {
+                        "type": "string",
+                        "description": "Must be 'Urgency', 'Trust', or 'Logical'."
+                    },
+                    "element_mappings": {
+                        "type": "array",
+                        "description": "List of text/image updates mapped exactly.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "element_id": {
+                                    "type": "string",
+                                    "description": "The exact data-tpd-id from the original scraped elements."
+                                },
+                                "new_value": {
+                                    "type": "string",
+                                    "description": "The rewritten text OR the new image URL."
+                                }
+                            },
+                            "required": ["element_id", "new_value"]
+                        }
+                    }
+                },
+                "required": ["variant_name", "element_mappings"]
+            }
+        }
+    },
+    "required": ["variants"]
+}
+
 # Add custom_prompt and creative_image_url to the parameters
 async def generate_variants(scraped_json_str: str, ad_context: dict, creative_image_url: str = "", custom_prompt: str = "") -> dict:
     llm = ChatGoogleGenerativeAI(model="gemini-3.1-flash-lite-preview", temperature=0.5)
-    structured_llm = llm.with_structured_output(CopywriterOutput)
+    
+    # Feed the raw schema directly to the LLM (bypassing Pydantic's $ref generator)
+    structured_llm = llm.with_structured_output(gemini_safe_schema)
 
     # Format the optional user instructions
     user_steering = f"\nUSER CUSTOM INSTRUCTIONS (PRIORITY OVERRIDE):\n{custom_prompt}" if custom_prompt else ""
@@ -54,10 +98,15 @@ async def generate_variants(scraped_json_str: str, ad_context: dict, creative_im
     chain = prompt | structured_llm
     
     try:
-        result = await chain.ainvoke({
+        # Get the raw dictionary from Gemini
+        raw_result = await chain.ainvoke({
             "ad_context": json.dumps(ad_context, indent=2),
             "scraped_elements": scraped_json_str
         })
+        
+        # Convert the dictionary back into your exact Pydantic model!
+        result = CopywriterOutput(**raw_result)
+        
         return result.dict()
     except Exception as e:
         print(f"Copywriter Agent failed: {str(e)}")
