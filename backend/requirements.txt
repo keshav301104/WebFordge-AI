@@ -18,7 +18,7 @@ langchain>=0.2.0
 langchain-core>=0.2.0
 langchain-openai>=0.1.0
 langchain-google-genai>=1.0.6
-langgraph==0.0.24
+langgraph>=0.1.0
 
 # Async Database Operations
 aiosqlite==0.20.0
